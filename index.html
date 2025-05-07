@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro-Futuristic Clock</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Basic Reset and Body Styling */
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a2e; /* Dark space blue/purple */
+            font-family: 'Orbitron', sans-serif; /* Retro-futuristic font */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Prevent scrollbars from page content itself */
+        }
+
+        /* CSS Variables for clock properties */
+        :root {
+            --clock-border-size: 2px;
+        }
+
+        /* Clock Container - The main housing for the Nixie tubes */
+        .clock-container {
+            display: flex;
+            gap: 10px; 
+            padding: 30px 40px;
+            background: linear-gradient(145deg, #2c2c54, #242448); 
+            border-radius: 20px; 
+            border: var(--clock-border-size) solid #4a4a7f; 
+            position: relative; 
+            /* Glow is managed by JS or media queries */
+        }
+
+        /* Individual Digit "Tube" Styling */
+        .digit-tube {
+            width: 70px; 
+            height: 120px; 
+            background-color: rgba(10, 10, 20, 0.7); 
+            border: 2px solid #6c5ce7; 
+            border-radius: 15px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                inset 0 0 10px rgba(0,0,0,0.6), 
+                0 0 15px rgba(168, 50, 255, 0.5); 
+            position: relative; 
+            overflow: hidden; 
+            cursor: default; /* Default cursor for tubes */
+        }
+        /* Specific cursor for the Easter egg trigger element */
+        #sec2-tube {
+            cursor: pointer;
+        }
+
+
+        /* Styling for the actual digit character */
+        .digit {
+            font-size: 64px; 
+            font-weight: 700;
+            color: #ff6b00; 
+            text-shadow:
+                0 0 3px #ff6b00,
+                0 0 6px #ff8c00,
+                0 0 10px #ffae42,
+                0 0 18px #cc5500;
+            position: relative;
+            animation: flicker 0.08s infinite alternate;
+        }
+        
+        /* Styling for the colon separator */
+        .separator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 120px;
+        }
+
+        .colon {
+            font-size: 48px;
+            color: #ff6b00;
+            line-height: 0.5; 
+            text-shadow:
+                0 0 3px #ff6b00,
+                0 0 6px #ff8c00,
+                0 0 10px #ffae42;
+            transition: opacity 0.15s ease-out, transform 0.15s ease-out; 
+        }
+
+        /* Flicker animation for digits */
+        @keyframes flicker {
+            0% { opacity: 0.95; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.005); }
+            100% { opacity: 0.96; transform: scale(0.995); }
+        }
+
+        /* Easter Egg Animation */
+        @keyframes easter-egg-wiggle {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            20% { transform: translateX(-6px) rotate(-3deg); }
+            40% { transform: translateX(6px) rotate(3deg); }
+            60% { transform: translateX(-4px) rotate(-2deg); }
+            80% { transform: translateX(4px) rotate(2deg); }
+        }
+        .easter-egg-active {
+            animation: easter-egg-wiggle 0.6s ease-in-out;
+        }
+
+
+        .digit-tube::before {
+            content: '';
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border-radius: 10px;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,107,0,0.05) 2px, rgba(255,107,0,0.05) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,107,0,0.05) 2px, rgba(255,107,0,0.05) 4px);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* Responsive adjustments - these define the static glow for smaller screens */
+        @media (max-width: 768px) {
+            .digit-tube { width: 50px; height: 90px; }
+            .digit { font-size: 42px; text-shadow: 0 0 2px #ff6b00, 0 0 4px #ff8c00, 0 0 7px #ffae42, 0 0 12px #cc5500; }
+            .clock-container { 
+                padding: 20px; 
+                gap: 5px; 
+                /* Static glow for smaller screens */
+                box-shadow: 
+                    inset 0 0 10px rgba(0,0,0,0.5),
+                    0px 8px 20px rgba(0,0,0,0.6),
+                    0 0 15px 0px rgba(0, 255, 255, 0.25),
+                    0 0 30px 5px rgba(0, 255, 255, 0.2),
+                    0 0 40px 0px rgba(255, 0, 255, 0.3),
+                    0 0 60px 10px rgba(255, 0, 255, 0.25);
+            }
+            .separator { width: 15px; }
+            .colon { font-size: 32px; text-shadow: 0 0 2px #ff6b00, 0 0 4px #ff8c00, 0 0 7px #ffae42; }
+        }
+
+        @media (max-width: 480px) {
+            .clock-container {
+                padding: 15px 20px; 
+                gap: 4px;
+                /* Static glow for very small screens */
+                 box-shadow: 
+                    inset 0 0 8px rgba(0,0,0,0.5),
+                    0px 6px 15px rgba(0,0,0,0.5),
+                    0 0 10px 0px rgba(0, 255, 255, 0.2),
+                    0 0 20px 3px rgba(0, 255, 255, 0.15),
+                    0 0 30px 0px rgba(255, 0, 255, 0.25),
+                    0 0 40px 8px rgba(255, 0, 255, 0.2);
+            }
+            .digit-tube {
+                width: 30px; 
+                height: 60px;
+            }
+            .digit {
+                font-size: 26px; 
+            }
+            .separator {
+                width: 8px; 
+                height: 60px;
+            }
+            .colon {
+                font-size: 20px; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="digit-tube" id="hour1-tube"><span class="digit" id="hour1">0</span></div>
+        <div class="digit-tube" id="hour2-tube"><span class="digit" id="hour2">0</span></div>
+        
+        <div class="separator"><span class="colon" id="colon1">:</span></div>
+        
+        <div class="digit-tube" id="min1-tube"><span class="digit" id="min1">0</span></div>
+        <div class="digit-tube" id="min2-tube"><span class="digit" id="min2">0</span></div>
+
+        <div class="separator"><span class="colon" id="colon2">:</span></div>
+
+        <div class="digit-tube" id="sec1-tube"><span class="digit" id="sec1">0</span></div>
+        <div class="digit-tube" id="sec2-tube"><span class="digit" id="sec2">0</span></div> 
+        </div>
+
+    <script>
+        // DOM Element references for Clock
+        const hour1Elem = document.getElementById('hour1');
+        const hour2Elem = document.getElementById('hour2');
+        const min1Elem = document.getElementById('min1');
+        const min2Elem = document.getElementById('min2');
+        const sec1Elem = document.getElementById('sec1'); 
+        const sec2Elem = document.getElementById('sec2'); 
+        const sec2TubeElem = document.getElementById('sec2-tube'); // Get the parent tube for click
+        const colon1Elem = document.getElementById('colon1'); 
+        const colon2Elem = document.getElementById('colon2'); 
+        const clockContainer = document.querySelector('.clock-container');
+
+        // --- Glow Effect Configuration (Speech-Like) ---
+        const baseBoxShadow = `
+            inset 0 0 15px rgba(0,0,0,0.5),
+            0px 10px 30px rgba(0,0,0,0.7),
+            0 0 10px 0px rgba(0, 255, 255, 0.15), 0 0 20px 3px rgba(0, 255, 255, 0.1), 0 0 30px 5px rgba(0, 255, 255, 0.08),
+            0 0 20px 0px rgba(255, 0, 255, 0.18), 0 0 35px 5px rgba(255, 0, 255, 0.15), 0 0 50px 10px rgba(255, 0, 255, 0.1)
+        `;
+        let pulseTimeoutId = null;
+        let isSpeechGlowActive = false; 
+
+        function setGlowStyle(intensityScale = 0) { 
+            if (!clockContainer) return;
+            let shadowToApply = baseBoxShadow;
+            let transitionSpeed = '0.2s ease-in'; 
+            if (intensityScale > 0) {
+                const maxCyanBlur = 120, maxCyanSpread = 30, maxCyanOpacity = 0.25;
+                const maxMagentaBlur = 200, maxMagentaSpread = 40, maxMagentaOpacity = 0.30;
+                const s0 = 'inset 0 0 15px rgba(0,0,0,0.5), 0px 10px 30px rgba(0,0,0,0.7),';
+                const sC1 = `0 0 ${10 + (maxCyanBlur * 0.3 * intensityScale)}px 0px rgba(0, 255, 255, ${0.15 + (maxCyanOpacity - 0.15) * intensityScale}),`;
+                const sC2 = `0 0 ${20 + (maxCyanBlur * 0.6 * intensityScale)}px ${3 + (maxCyanSpread * 0.5 * intensityScale)}px rgba(0, 255, 255, ${0.1 + (maxCyanOpacity - 0.1) * intensityScale}),`;
+                const sC3 = `0 0 ${30 + (maxCyanBlur * intensityScale)}px ${5 + (maxCyanSpread * intensityScale)}px rgba(0, 255, 255, ${0.08 + (maxCyanOpacity - 0.08) * intensityScale}),`;
+                const sM1 = `0 0 ${20 + (maxMagentaBlur * 0.4 * intensityScale)}px 0px rgba(255, 0, 255, ${0.18 + (maxMagentaOpacity - 0.18) * intensityScale}),`;
+                const sM2 = `0 0 ${35 + (maxMagentaBlur * 0.65 * intensityScale)}px ${5 + (maxMagentaSpread * 0.5 * intensityScale)}px rgba(255, 0, 255, ${0.15 + (maxMagentaOpacity - 0.15) * intensityScale}),`;
+                const sM3 = `0 0 ${50 + (maxMagentaBlur * intensityScale)}px ${10 + (maxMagentaSpread * intensityScale)}px rgba(255, 0, 255, ${0.1 + (maxMagentaOpacity - 0.1) * intensityScale})`;
+                shadowToApply = s0 + sC1 + sC2 + sC3 + sM1 + sM2 + sM3;
+                transitionSpeed = '0.05s ease-out'; 
+            }
+            clockContainer.style.transition = `box-shadow ${transitionSpeed}`;
+            clockContainer.style.boxShadow = shadowToApply;
+        }
+
+        function speechLikePulse() {
+            if (!isSpeechGlowActive || !clockContainer) { 
+                 if(clockContainer) clockContainer.style.boxShadow = baseBoxShadow; 
+                return;
+            }
+            if (pulseTimeoutId) clearTimeout(pulseTimeoutId);
+            const intensity = Math.random() * 0.7 + 0.3; 
+            const pulseDuration = Math.random() * 200 + 100; 
+            setGlowStyle(intensity); 
+            pulseTimeoutId = setTimeout(() => {
+                if (!isSpeechGlowActive) return; 
+                setGlowStyle(0); 
+                let nextPulseDelay;
+                const randomChoice = Math.random();
+                if (randomChoice < 0.6) { 
+                    nextPulseDelay = Math.random() * 150 + 50; 
+                } else if (randomChoice < 0.85) { 
+                    nextPulseDelay = Math.random() * 300 + 200; 
+                } else { 
+                    nextPulseDelay = Math.random() * 800 + 500; 
+                }
+                pulseTimeoutId = setTimeout(speechLikePulse, nextPulseDelay);
+            }, pulseDuration);
+        }
+
+        function manageGlowEffect() {
+            if (window.matchMedia("(min-width: 768.01px)").matches) {
+                if (!isSpeechGlowActive) {
+                    isSpeechGlowActive = true;
+                    if (clockContainer) { 
+                        clockContainer.style.animation = 'none'; 
+                        setGlowStyle(0); 
+                    }
+                    speechLikePulse(); 
+                }
+            } else {
+                if (isSpeechGlowActive) {
+                    isSpeechGlowActive = false;
+                    if (pulseTimeoutId) clearTimeout(pulseTimeoutId);
+                    if (clockContainer) { 
+                        clockContainer.style.boxShadow = ''; 
+                        clockContainer.style.transition = '';
+                        clockContainer.style.animation = ''; 
+                    }
+                }
+            }
+        }
+
+        /** Updates the clock digits with the current time. */
+        function updateClockDigits() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds(); 
+            const hoursStr = String(hours).padStart(2, '0');
+            const minutesStr = String(minutes).padStart(2, '0');
+            const secondsStr = String(seconds).padStart(2, '0'); 
+            hour1Elem.textContent = hoursStr[0];
+            hour2Elem.textContent = hoursStr[1];
+            min1Elem.textContent = minutesStr[0];
+            min2Elem.textContent = minutesStr[1];
+            sec1Elem.textContent = secondsStr[0]; 
+            sec2Elem.textContent = secondsStr[1]; 
+        }
+
+        // --- Easter Egg Logic ---
+        if (sec2TubeElem && sec2Elem && clockContainer) {
+            sec2TubeElem.addEventListener('click', () => {
+                // Check if the last digit of seconds is '2' and animation is not already active
+                if (sec2Elem.textContent === '2' && !clockContainer.classList.contains('easter-egg-active')) {
+                    clockContainer.classList.add('easter-egg-active');
+                    // Remove the class after animation finishes to allow re-triggering
+                    setTimeout(() => {
+                        clockContainer.classList.remove('easter-egg-active');
+                    }, 600); // Duration of the wiggle animation (0.6s)
+                }
+            });
+        }
+
+
+        // --- Initialization and Intervals ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClockDigits();   
+            manageGlowEffect(); // Initial check for clock glow
+            
+            // Main 1-second interval for clock updates
+            setInterval(() => {
+                updateClockDigits(); 
+            }, 1000);
+
+            // Colon ticking (opacity and scale) interval for alternating effect
+            let colonToggleState = true; 
+            setInterval(() => {
+                colonToggleState = !colonToggleState; 
+                if (colon1Elem && colon2Elem) { 
+                    if (colonToggleState) {
+                        colon1Elem.style.opacity = '1';
+                        colon1Elem.style.transform = 'scale(1)';
+                        colon2Elem.style.opacity = '0.35';
+                        colon2Elem.style.transform = 'scale(0.85)';
+                    } else {
+                        colon1Elem.style.opacity = '0.35';
+                        colon1Elem.style.transform = 'scale(0.85)';
+                        colon2Elem.style.opacity = '1';
+                        colon2Elem.style.transform = 'scale(1)';
+                    }
+                }
+            }, 1000); 
+
+            window.addEventListener('resize', () => {
+                manageGlowEffect();
+            });
+        });
+
+    </script>
+
+</body>
+</html>
